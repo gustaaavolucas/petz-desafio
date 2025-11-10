@@ -1,0 +1,46 @@
+name: CI-CD
+
+on:
+  push:
+    branches: ["main"]
+
+env:
+  IMAGE_NAME: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/hello-cicd
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          TAG=${GITHUB_SHA::7}
+          echo "🔨 Building image: $IMAGE_NAME:$TAG"
+          docker build -t $IMAGE_NAME:$TAG ./app
+          echo "🚀 Pushing image to Docker Hub..."
+          docker push $IMAGE_NAME:$TAG
+          echo "✅ Image pushed: $IMAGE_NAME:$TAG"
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Update Kubernetes manifest with new image
+        run: |
+          echo "📝 Updating image tag in k8s/app-deployment.yaml..."
+          sed -i "s|docker.io/.*/hello-cicd:.*|docker.io/${{ secrets.DOCKERHUB_USERNAME }}/hello-cicd:${TAG}|g" k8s/app-deployment.yaml
+          cat k8s/app-deployment.yaml | grep image
+
+      - name: Commit and push manifest changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add k8s/app-deployment.yaml
+          git commit -m "ci: update image to ${TAG}" || echo "No changes to commit"
+          git push
