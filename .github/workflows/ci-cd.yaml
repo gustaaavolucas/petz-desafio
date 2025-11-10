@@ -3,6 +3,9 @@ name: CI-CD
 on:
   push:
     branches: ["main"]
+ 
+permissions:
+  contents: write     
 
 env:
   IMAGE_NAME: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/hello-cicd
