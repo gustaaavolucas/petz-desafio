@@ -11,10 +11,13 @@ resource "helm_release" "argocd" {
   namespace  = var.namespace
 
   values = [
-    <<-EOF
+    <<-YAML
     server:
+      replicas: 1
+      extraArgs:
+        - --insecure
       service:
-        type: ${var.service_type}
-    EOF
+        type: ClusterIP
+    YAML
   ]
 }
