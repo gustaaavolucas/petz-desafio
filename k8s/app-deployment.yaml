@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: hello-cicd
-          image: docker.io/uz2idkfwxm/hello-cicd:3b25915
+          image: docker.io/uz2idkfwxm/hello-cicd:d878b19
           ports:
             - containerPort: 8080
           readinessProbe:
